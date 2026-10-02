@@ -8,9 +8,12 @@ type IconName =
   | "check"
   | "chevron"
   | "clock"
+  | "close"
   | "headphones"
+  | "message"
   | "more"
   | "search"
+  | "send"
   | "settings"
   | "spark"
   | "target"
@@ -150,9 +153,12 @@ function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
     check: <><path d="m5 12 4 4L19 6" /></>,
     chevron: <><path d="m9 18 6-6-6-6" /></>,
     clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+    close: <><path d="m6 6 12 12M18 6 6 18" /></>,
     headphones: <><path d="M4 14v-2a8 8 0 0 1 16 0v2M18 19h1a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2h-1ZM6 19H5a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2h1Z" /></>,
+    message: <><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" /><path d="M8 10h.01M12 10h.01M16 10h.01" /></>,
     more: <><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none" /></>,
     search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
+    send: <><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></>,
     settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" /></>,
     spark: <><path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z" /><path d="m18.5 14 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" /></>,
     target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" fill="currentColor" /></>,
@@ -327,11 +333,119 @@ function Incidents() {
   );
 }
 
+function MessagePanel({ user, onClose }: { user: User; onClose: () => void }) {
+  const [message, setMessage] = useState("");
+  const [sentMessages, setSentMessages] = useState<string[]>([]);
+  const firstName = user.name.split(" ")[0];
+  const suggestions = [
+    `Hi ${firstName}, I noticed your focus time is below your usual rhythm. Is there anything I can help unblock?`,
+    `Hi ${firstName}, would you like to move any meetings to protect a focus block today?`,
+    "Just checking in—remember to take a short reset before your next focus session.",
+  ];
+
+  const sendMessage = () => {
+    const trimmed = message.trim();
+    if (!trimmed) return;
+    setSentMessages((current) => [...current, trimmed]);
+    setMessage("");
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/30" role="dialog" aria-modal="true" aria-label={`Message ${user.name}`}>
+      <button type="button" className="absolute inset-0 cursor-default" onClick={onClose} aria-label="Close message panel" />
+      <section className="relative flex h-full w-full max-w-md flex-col bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <Avatar user={user} />
+            <div>
+              <h2 className="font-semibold text-slate-900">{user.name}</h2>
+              <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                <span className={`size-1.5 rounded-full ${user.status === "Offline" ? "bg-slate-300" : "bg-emerald-500"}`} />
+                {user.status === "Offline" ? "Will receive when online" : "Available now"}
+              </div>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800">
+            <Icon name="close" />
+          </button>
+        </div>
+
+        <div className="border-b border-slate-100 bg-indigo-50 px-5 py-4">
+          <div className="flex items-start gap-3">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white text-indigo-600 shadow-sm"><Icon name="spark" size={16} /></span>
+            <div>
+              <p className="text-sm font-semibold text-indigo-950">Focus context</p>
+              <p className="mt-1 text-xs leading-relaxed text-indigo-700">
+                {firstName} has logged {user.focusTime} of focus time with a {user.score}% score this week.
+                {user.score < 85 ? " A supportive check-in is recommended." : " Their focus rhythm is currently healthy."}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5">
+          <div className="mb-6 flex items-center gap-3">
+            <span className="h-px flex-1 bg-slate-100" />
+            <span className="text-xs font-medium text-slate-400">Today</span>
+            <span className="h-px flex-1 bg-slate-100" />
+          </div>
+          <div className="flex gap-2.5">
+            <div className="grid size-7 shrink-0 place-items-center rounded-lg bg-slate-900 text-xs font-semibold text-white">AD</div>
+            <div className="max-w-xs rounded-2xl rounded-tl-md bg-slate-100 px-4 py-3 text-sm leading-relaxed text-slate-700">
+              Hi {firstName}, checking in on your focus plan for today. Let me know if you need help protecting some deep-work time.
+              <span className="mt-1.5 block text-xs text-slate-400">9:14 AM · Delivered</span>
+            </div>
+          </div>
+          {sentMessages.map((sent, index) => (
+            <div key={`${sent}-${index}`} className="mt-3 flex justify-end">
+              <div className="max-w-xs rounded-2xl rounded-tr-md bg-indigo-600 px-4 py-3 text-sm leading-relaxed text-white">
+                {sent}
+                <span className="mt-1.5 block text-xs text-indigo-200">Just now · Sent</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-slate-200 bg-white p-4">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Quick prompts</p>
+          <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+            {suggestions.map((suggestion, index) => (
+              <button key={suggestion} type="button" onClick={() => setMessage(suggestion)} className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+                {index === 0 ? "Supportive check-in" : index === 1 ? "Protect focus time" : "Suggest a reset"}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 focus-within:border-indigo-300 focus-within:bg-white">
+            <textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  sendMessage();
+                }
+              }}
+              rows={2}
+              className="min-h-12 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+              placeholder={`Message ${firstName}...`}
+            />
+            <button type="button" onClick={sendMessage} disabled={!message.trim()} aria-label="Send message" className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-600 text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">
+              <Icon name="send" size={17} />
+            </button>
+          </div>
+          <p className="mt-2 text-center text-xs text-slate-400">Press Enter to send · Shift + Enter for a new line</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
   const [selectedId, setSelectedId] = useState(1);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState("Overview");
   const [listOpen, setListOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
 
   const filteredUsers = useMemo(() => users.filter((user) => `${user.name} ${user.role}`.toLowerCase().includes(query.toLowerCase())), [query]);
   const selected = users.find((user) => user.id === selectedId) ?? users[0];
@@ -339,6 +453,7 @@ export default function App() {
   const selectUser = (id: number) => {
     setSelectedId(id);
     setListOpen(false);
+    setMessageOpen(false);
   };
 
   return (
@@ -415,7 +530,10 @@ export default function App() {
                   <p className="mt-1 text-sm text-slate-500">{selected.role} · {selected.team}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => setMessageOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">
+                  <Icon name="message" size={16} /> Message
+                </button>
                 <button type="button" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"><Icon name="calendar" size={16} /> Last 7 days</button>
                 <button type="button" aria-label="More options" className="grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm hover:bg-slate-50"><Icon name="more" /></button>
               </div>
@@ -441,6 +559,7 @@ export default function App() {
           </div>
         </div>
       </div>
+      {messageOpen && <MessagePanel key={selected.id} user={selected} onClose={() => setMessageOpen(false)} />}
     </main>
   );
 }
