@@ -1,0 +1,10 @@
+{
+  "description": "Efficiently manage user information with a master-detail interface that displays a comprehensive list of users and detailed profiles for each.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
